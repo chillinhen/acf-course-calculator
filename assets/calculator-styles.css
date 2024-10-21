@@ -1,0 +1,41 @@
+
+#courseCalculator {
+    background-color: inherit;
+    color: inherit;
+  }
+  #courseCalculator input, #courseCalculator select {
+    font-size: inherit;
+    color:#333 !important;
+  }
+  #courseCalculator .row {
+    margin: 0;
+    align-items: baseline;
+    display: flex;
+    flex-wrap: nowrap;
+  }
+  #courseCalculator .row > div{flex:1;}
+  @media screen  and (max-width:320px){
+    #courseCalculator .row {
+      flex-wrap: wrap;
+    }
+    #courseCalculator .row > div{flex:1 0 100%;}
+  }
+  #courseCalculator .row.flex-column {
+    margin-bottom: 1rem;
+    flex-direction:column;
+  }
+  #courseCalculator hr {
+    border-bottom: 1px dotted currentColor;
+    margin: 1rem 0;
+  }
+  #courseCalculator input[readonly] {
+    background: none !important;
+    border: 0 !important;
+    appearance: none;
+    color: inherit !important;
+    text-align: right;
+    font-weight: 600;
+  }
+  #courseCalculator .row.priceall {
+    font-size:larger;
+  }
