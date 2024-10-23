@@ -122,7 +122,114 @@ function acf_course_calculator() {
     </div>
 </form>
 <script>
-document.addEventListener("DOMContentLoaded",function(){const o=document.getElementById("modulSelection"),d=document.getElementById("modulDuration"),l=document.getElementById("showLevel"),u=document.getElementById("showDiscount"),s=document.getElementById("showPriceReg"),i=document.getElementById("showPriceAll"),c=document.getElementById("showPriceRegAll");function e(){var e=o.options[o.selectedIndex].dataset.index,t=parseInt(d.value),n=moduleData.length-e;let a=parseInt(e)+t-1;a>=moduleData.length&&(a=moduleData.length-1),l.value=moduleData[a].name;for(let e=0;e<d.options.length;e++)e+1>n?d.options[e].disabled=!0:d.options[e].disabled=!1}function t(){const t=parseInt(d.value);var e=discountData.find(e=>e.nr==t);u.value=e?e.discount+" EUR":"0 EUR"}function n(){var t=parseInt(o.options[o.selectedIndex].dataset.index),n=parseInt(d.value);let a=0;for(let e=0;e<n;e++)t+e<moduleData.length&&(a+=parseInt(moduleData[t+e].preis));s.value=a+" EUR";var e=parseInt(u.value),e=a-e,e=(i.value=e+" EUR",e/n);c.value=e.toFixed(2)+" EUR"}moduleData.forEach((e,t)=>{var n=document.createElement("option");n.value=e.preis,n.dataset.name=e.name,n.dataset.index=t,n.text=e.name,o.appendChild(n)}),o.addEventListener("change",function(){d.value="1";for(let e=0;e<d.options.length;e++)d.options[e].disabled=!1;e(),t(),n()}),d.addEventListener("change",function(){e(),t(),n()}),e(),t(),n()});
+    document.addEventListener("DOMContentLoaded", function() {
+        // Referenzen auf HTML-Elemente
+        const modulSelection = document.getElementById("modulSelection");
+        const modulDuration = document.getElementById("modulDuration");
+        const showLevel = document.getElementById("showLevel");
+        const showDiscount = document.getElementById("showDiscount");
+        const showPriceReg = document.getElementById("showPriceReg");
+        const showPriceAll = document.getElementById("showPriceAll");
+        const showPriceRegAll = document.getElementById("showPriceRegAll");
+
+        // 1. Populate #modulSelection with options from moduleData
+        moduleData.forEach((module, index) => {
+            let option = document.createElement("option");
+            option.value = module.preis;
+            option.dataset.name = module.name;
+            option.dataset.index = index; // Index für spätere Verwendung
+            //option.text = module.name + " (" + module.preis + " EUR)";
+            option.text = module.name;
+            modulSelection.appendChild(option);
+        });
+
+        // Update #modulDuration and #showLevel based on selections
+        function updateLevelAndDuration() {
+            const selectedIndex = modulSelection.options[modulSelection.selectedIndex].dataset.index;
+            const selectedDuration = parseInt(modulDuration.value);
+            const maxModules = moduleData.length - selectedIndex;
+
+            // Update the #showLevel input
+            let endLevelIndex = parseInt(selectedIndex) + selectedDuration - 1;
+            if (endLevelIndex >= moduleData.length) {
+                endLevelIndex = moduleData.length - 1;
+            }
+            showLevel.value = moduleData[endLevelIndex].name;
+
+            // Disable extra months in #modulDuration if the selection exceeds available modules
+            for (let i = 0; i < modulDuration.options.length; i++) {
+                if (i + 1 > maxModules) {
+                    modulDuration.options[i].disabled = true;
+                } else {
+                    modulDuration.options[i].disabled = false;
+                }
+            }
+        }
+        function resetDuration() {
+            modulDuration.value = "1";
+                // Enable all options in the module duration select
+                for (let i = 0; i < modulDuration.options.length; i++) {
+                    modulDuration.options[i].disabled = false;
+                }    
+        }
+
+        // 4. Update #showDiscount based on #modulDuration
+        function updateDiscount() {
+            const selectedDuration = parseInt(modulDuration.value);
+            const discountEntry = discountData.find(entry => entry.nr == selectedDuration);
+            if (discountEntry) {
+                showDiscount.value = discountEntry.discount + " EUR";
+            } else {
+                showDiscount.value = "0 EUR";
+            }
+        }
+
+        // 1. Calculate regular total price based on selected modules and duration
+        function updateTotalPrice() {
+            const selectedIndex = parseInt(modulSelection.options[modulSelection.selectedIndex].dataset.index);
+            const selectedDuration = parseInt(modulDuration.value);
+            let totalPrice = 0;
+
+            // Iterate through the selected modules and sum up the prices
+            for (let i = 0; i < selectedDuration; i++) {
+                if (selectedIndex + i < moduleData.length) {
+                    totalPrice += parseInt(moduleData[selectedIndex + i].preis);
+                }
+            }
+            showPriceReg.value = totalPrice + " EUR";
+
+            // 2. Subtract discount from regular total price
+            const discount = parseInt(showDiscount.value);
+            const discountedPrice = totalPrice - discount;
+            showPriceAll.value = discountedPrice + " EUR";
+
+            // 3. Calculate price per module
+            const pricePerModule = discountedPrice / selectedDuration;
+            showPriceRegAll.value = pricePerModule.toFixed(2) + " EUR";
+        }
+
+        // Event listeners for changes in selections
+        modulSelection.addEventListener("change", function() {
+            resetDuration();
+            updateLevelAndDuration();
+            updateDiscount();
+            updateTotalPrice();
+        });
+
+
+        modulDuration.addEventListener("change", function() {
+            updateLevelAndDuration();
+            updateDiscount();
+            updateTotalPrice();
+        });
+
+        // Initial update on page load
+        updateLevelAndDuration();
+        updateDiscount();
+        updateTotalPrice();
+    });
+
+
     </script>
 
     <?php
