@@ -1,4 +1,3 @@
-
 #courseCalculator {
     background-color: inherit;
     color: inherit;
@@ -36,6 +35,15 @@
     color: inherit !important;
     text-align: right;
     font-weight: 600;
+    padding-right: .25rem !important;
+  }
+  #courseCalculator input[readonly]:focus{
+    outline: none;
+    appearance: none;
+  }
+  #courseCalculator input[readonly] +  span.currency{
+    font-weight: 600;
+    font-size:large;
   }
   #courseCalculator .row.priceall {
     font-size:larger;
@@ -45,4 +53,11 @@
     background-color: #ffc107;
     font-size:larger;
     border-radius: 6px;
+    padding: 0 .5rem;
+    display: flex;
+    align-items: baseline;
+  }
+
+  #courseCalculator .hidden {
+    display: none !important;
   }
