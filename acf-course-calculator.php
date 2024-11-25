@@ -45,6 +45,7 @@ function acf_course_calculator() {
     $labelModuleStart = get_field('label-module-start','option');
     $labelModuleGoal = get_field('label-module-goal','option');
     $labelRegPrice = esc_html(get_field('label-reg-price','option'));
+    $labelCourseCount = esc_html(get_field('label-course-count','option'));
     $labelDiscount = esc_html(get_field('label-dicount','option'));
     $labelResult = esc_html(get_field('label-result','option'));
     $labelDiscountResult = esc_html(get_field('label-discount-result','option'));
@@ -56,37 +57,65 @@ function acf_course_calculator() {
             <legend><?php echo esc_html($headline);?></legend>
         <?php endif; ?>
         <div class="form-group my-3">
-            <label for="moduleStart"><strong><?php echo (esc_html($labelModuleStart)) ? esc_html($labelModuleStart) : '';?></strong></label></label>
+            <label for="moduleStart"><strong><?php echo (esc_html($labelModuleStart)) ? esc_html($labelModuleStart) : '';?></strong></label>
             <select id="moduleStart" class="form-control"></select>
         </div>
         <div class="form-group my-3">
-            <label for="moduleGoal"><strong><?php echo (esc_html($labelModuleGoal)) ? esc_html($labelModuleGoal) : '';?></strong></label></label>
+            <label for="moduleGoal"><strong><?php echo (esc_html($labelModuleGoal)) ? esc_html($labelModuleGoal) : '';?></strong></label>
             <select id="moduleGoal" class="form-control"></select>
         </div>
-        <hr>                
-        <div class="form-group row my-3">
+        <hr>
+        <div class="form-group d-flex my-3">
+        <div class="col-md-6">
+            <label for="countCourses"><strong><?php echo (esc_html($labelCourseCount)) ? esc_html($labelCourseCount) : '';?></strong></label>
+        </div>
+        <div class="col-md-6">
+            <input class="form-control" id="countCourses" type="text" value="" readonly />
+        </div>
+        </div>              
+        <div class="form-group d-flex my-3">
             <div class="col-md-6"><label for="showPriceReg"><?php echo (esc_html($labelRegPrice)) ? esc_html($labelRegPrice) : '';?></label></div>
             <div class="col-md-6"><input class="form-control" id="showPriceReg" type="text" value="" readonly /></div>
         </div>
-        <div class="form-group row my-3" id="rowDiscount">
+        <div class="form-group d-flex my-3" id="rowDiscount">
             <div class="col-md-6"><label for="showDiscount"><?php echo (esc_html($labelDiscount)) ? esc_html($labelDiscount) : '';?></label></div>
             <div class="col-md-6"><input class="form-control" id="showDiscount" type="text" value="" readonly /></div>
         </div>
         <hr>
-        <div class="form-group row my-3 priceall">
-            <div class="col-md-6"><label for="showPriceRegAll"><strong><?php echo (esc_html($labelResult)) ? esc_html($labelResult) : '';?></strong></label></div>
+        <div class="form-group d-flex my-3 priceall">
+            <div class="col-md-6">
+                <label for="showPriceRegAll">
+                    <strong id="labelResult"><?php echo (esc_html($labelResult)) ? esc_html($labelResult) : '';?></strong>
+                    <strong id="labelDiscountResult" class="d-none"><?php echo (esc_html($labelDiscountResult)) ? esc_html($labelDiscountResult) : '';?></strong>
+                </label>
+            </div>
             <div class="col-md-6"><input class="form-control" id="showPriceAll" type="text" value="" readonly /></div>
         </div>
     </form>
     <script>
     document.addEventListener("DOMContentLoaded", function () {
-    const moduleStart = document.getElementById("moduleStart");
-    const moduleGoal = document.getElementById("moduleGoal");
-    const showPriceReg = document.getElementById("showPriceReg"); // Eingabefeld für den Preis
-    const showDiscount = document.getElementById("showDiscount");
-    const showPriceAll = document.getElementById("showPriceAll");
+        console.log('test');
+        //setup vars
+        const moduleStart = document.getElementById("moduleStart");
+        const moduleGoal = document.getElementById("moduleGoal");
+        const countCourses = document.getElementById("countCourses");
+        const showPriceReg = document.getElementById("showPriceReg");
+        const showDiscount = document.getElementById("showDiscount");
+        const showPriceAll = document.getElementById("showPriceAll");
 
-    const createOptionsFromObj = (arr, sel) => {
+        const rowDiscount = document.getElementById("rowDiscount");
+        const labelPriceAll = document.querySelector("label[for='showPriceAll']"); 
+        const labelResult = document.getElementById("labelResult");
+        const labelDiscountResult = document.getElementById("labelDiscountResult");
+        
+        if (!rowDiscount) {
+            console.warn("Element #rowDiscount wurde nicht gefunden. Rabatt wird möglicherweise nicht korrekt angezeigt.");
+        }
+        if (!labelPriceAll) {
+            console.warn("Element label[for='showPriceAll'] wurde nicht gefunden. Gesamtpreis-Label wird möglicherweise nicht korrekt angezeigt.");
+        }
+
+        const createOptionsFromObj = (arr, sel) => {
         sel.innerHTML = '';
         if (arr) {
             arr.forEach(module => {
@@ -96,94 +125,92 @@ function acf_course_calculator() {
                 sel.appendChild(option);
             });
         }
-    };
+        };
 
-    // Rabatt berechnen
-    const calculateDiscount = (courseCount) => {
-        let discount = 0;
-        acfCourseData.discountData.forEach(d => {
-            if (courseCount >= d.nr) {
-                discount = Math.max(discount, parseFloat(d.discount));
+        // Rabatt berechnen
+        const calculateDiscount = (courseCount) => {
+            let discount = 0;
+            acfCourseData.discountData.forEach(d => {
+                if (courseCount >= d.nr) {
+                    discount = Math.max(discount, parseFloat(d.discount));
+                }
+            });
+            console.log("Berechneter Rabatt:", discount);
+            return discount;
+        };
+
+        // Berechnung der Preise und Rabatte
+        const calculatePrices = () => {
+            const startIndex = moduleStart.selectedIndex;
+            const goalIndex = moduleGoal.selectedIndex;
+
+            console.log("Startindex:", startIndex, "Zielindex:", goalIndex);
+
+            if (startIndex !== -1 && goalIndex !== -1) {
+                const pricesInBetween = acfCourseData.moduleDataCourses
+                    .slice(startIndex, startIndex + goalIndex + 1)
+                    .map(module => parseFloat(module.value));
+
+                const courseCount = pricesInBetween.length;
+                const totalPrice = pricesInBetween.reduce((sum, price) => sum + price, 0);
+                const discount = calculateDiscount(courseCount);
+                const finalPrice = totalPrice - discount;
+
+                console.log("Preise zwischen Auswahl:", pricesInBetween);
+                console.log("Gesamtsumme ohne Rabatt:", totalPrice);
+                console.log("Anzahl der gebuchten Kurse:", courseCount);
+                console.log("Rabatt:", discount);
+                console.log("Gesamtpreis:", finalPrice);
+                
+                countCourses.value = courseCount;
+                showPriceReg.value = totalPrice.toFixed(2);
+                showPriceAll.value = finalPrice.toFixed(2);
+
+                // Rabatt anzeigen oder verstecken
+                if (discount > 0) {
+                    rowDiscount.style.display = "flex";
+                    showDiscount.value = discount.toFixed(2);
+                    labelResult.classList.add('d-none');
+                    labelDiscountResult.classList.remove('d-none');
+                    //labelPriceAll.textContent = "Ihr rabattierter Gesamtpreis:";
+                } else {
+                    rowDiscount.style.display = "none";
+                    labelResult.classList.remove('d-none');
+                    labelDiscountResult.classList.add('d-none');
+                    //labelPriceAll.textContent = "Gesamtpreis:";
+                }
+            } else {
+                console.warn("Ungültige Auswahl für Start- oder Zielmodul.");
+                showPriceReg.value = "";
+                showDiscount.value = "";
+                showPriceAll.value = "";
             }
-        });
-        return discount;
     };
 
-    // Berechnung der Preise und Rabatte
-    const calculatePrices = () => {
-        const startIndex = moduleStart.selectedIndex;
-        const goalIndex = moduleGoal.selectedIndex;
 
-        if (startIndex !== -1 && goalIndex !== -1) {
-            // Ermitteln der Preise zwischen den Indizes (inklusive `moduleStart`, exklusiv `moduleGoal`)
-            const pricesInBetween = acfCourseData.moduleDataCourses
-                .slice(startIndex, startIndex + goalIndex + 1) // Zielbereich
-                .map(module => parseFloat(module.value)); // Preise extrahieren und zu Zahlen konvertieren
-
-            // Anzahl der gebuchten Kurse
-            const courseCount = pricesInBetween.length;
-
-            // Summe berechnen
-            const totalPrice = pricesInBetween.reduce((sum, price) => sum + price, 0);
-
-            // Rabatt basierend auf der Anzahl der Kurse
-            const discount = calculateDiscount(courseCount);
-
-            // Gesamtpreis berechnen
-            const finalPrice = totalPrice - discount;
-
-            // Konsolenausgabe für Debugging
-            console.log("Preise zwischen Auswahl:", pricesInBetween);
-            console.log("Gesamtsumme ohne Rabatt:", totalPrice);
-            console.log("Anzahl der gebuchten Kurse:", courseCount);
-            console.log("Rabatt:", discount);
-            console.log("Gesamtpreis:", finalPrice);
-
-            // Werte in die Felder eintragen
-            showPriceReg.value = totalPrice.toFixed(2); // Fixiere auf 2 Nachkommastellen
-            showDiscount.value = discount.toFixed(2); // Rabatt anzeigen
-            showPriceAll.value = finalPrice.toFixed(2); // Gesamtpreis anzeigen
-        } else {
-            // Falls keine gültige Auswahl getroffen wurde, die Felder leeren
-            showPriceReg.value = "";
-            showDiscount.value = "";
-            showPriceAll.value = "";
-        }
-    };
 
         // Initial Dropdowns mit Optionen befüllen
         createOptionsFromObj(acfCourseData.moduleDataCourses, moduleStart);
         createOptionsFromObj(acfCourseData.moduleDataCourses, moduleGoal);
 
-        // Initiale Auswahl setzen
-        moduleStart.selectedIndex = 0; // Erster Index
-        //moduleGoal.selectedIndex = Math.min(1, moduleGoal.options.length - 1); // Zweiter Index, falls vorhanden
+        moduleStart.selectedIndex = 0;
         moduleGoal.selectedIndex = 0;
-        // Initiale Berechnung ausführen
+
         calculatePrices();
 
-        // Aktualisieren von `moduleGoal`, basierend auf der Auswahl in `moduleStart`
         moduleStart.addEventListener("change", function () {
             const startIndex = moduleStart.selectedIndex;
 
             if (startIndex !== -1) {
-                // Filtere die Optionen ab dem nächsten Index
                 const filteredOptions = acfCourseData.moduleDataCourses.slice(startIndex + 1);
-
-                // Aktualisiere die Liste für `moduleGoal`
                 createOptionsFromObj(filteredOptions, moduleGoal);
-
-                // Standardwert für `moduleGoal` setzen
                 moduleGoal.selectedIndex = 0;
-
-                // Berechnung nach Anpassung
                 calculatePrices();
             }
         });
+        moduleGoal.addEventListener("change", calculatePrices);
 
-    // Event-Listener für die Berechnung bei Änderung von `moduleGoal`
-    moduleGoal.addEventListener("change", calculatePrices);
-});
+    });
 
     </script>
     <?php 
