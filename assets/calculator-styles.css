@@ -1,4 +1,3 @@
-
 #courseCalculator {
     background-color: inherit;
     color: inherit;
@@ -14,6 +13,7 @@
     flex-wrap: nowrap;
   }
   #courseCalculator .row > div{flex:1;}
+
   @media screen  and (max-width:320px){
     #courseCalculator .row {
       flex-wrap: wrap;
@@ -35,7 +35,29 @@
     color: inherit !important;
     text-align: right;
     font-weight: 600;
+    padding-right: .25rem !important;
+  }
+  #courseCalculator input[readonly]:focus{
+    outline: none;
+    appearance: none;
+  }
+  #courseCalculator input[readonly] +  span.currency{
+    font-weight: 600;
+    font-size:large;
   }
   #courseCalculator .row.priceall {
     font-size:larger;
+  }
+  #courseCalculator #rowDiscount {
+    /*display: none; /* Standardmäßig versteckt */
+    background-color: #ffc107;
+    font-size:larger;
+    border-radius: 6px;
+    padding: 0 .5rem;
+    display: flex;
+    align-items: baseline;
+  }
+
+  #courseCalculator .hidden {
+    display: none !important;
   }
