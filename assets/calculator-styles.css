@@ -48,16 +48,23 @@
   #courseCalculator .row.priceall {
     font-size:larger;
   }
-  #courseCalculator #rowDiscount {
-    /*display: none; /* Standardmäßig versteckt */
-    background-color: #ffc107;
+  #courseCalculator #rowDiscount,
+  #courseCalculator #rowPriceAll {
     font-size:larger;
     border-radius: 6px;
     padding: 0 .5rem;
     display: flex;
     align-items: baseline;
   }
-
-  #courseCalculator .hidden {
-    display: none !important;
+  #courseCalculator #rowPriceAll{
+    background-color: #2466a8;
+    color:#fff !important;
   }
+  #courseCalculator #rowDiscount {
+    display: none; /* Standardmäßig versteckt */
+    background-color: #ffc107;
+  }
+  #courseCalculator #rowDiscount.flex {display: flex; /* Zeige Rabattfeld an */}
+  #courseCalculator #rowDiscount.d-none {display: none !important; /* Ausblenden */}
+
+  

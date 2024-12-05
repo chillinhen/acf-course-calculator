@@ -93,12 +93,12 @@ function acf_course_calculator() {
             <div class="col-md-6"><label for="showPriceReg"><?php echo $labelRegPrice; ?></label></div>
             <div class="col-md-6"><div class="price d-flex align-items-baseline justify-content-end"><input class="form-control" id="showPriceReg" type="text" value="" readonly /><?php echo $currency; ?></div></div>
         </div>
-        <div class="form-group d-flex my-3 hidden" id="rowDiscount" aria-hidden="true">
+        <div class="form-group my-3" id="rowDiscount" aria-hidden="true">
             <div class="col-md-6"><label for="showDiscount"><?php echo $labelDiscount; ?></label></div>
             <div class="col-md-6"><div class="price d-flex align-items-baseline justify-content-end"><input class="form-control" id="showDiscount" type="text" value="" readonly /><?php echo $currency; ?></div></div>
         </div>
         <hr>
-        <div class="form-group d-flex my-3">
+        <div class="form-group my-3" id="rowPriceAll">
             <div class="col-md-6">
                 <label for="showPriceRegAll">
                     <strong id="labelResult"><?php echo $labelResult; ?></strong>
