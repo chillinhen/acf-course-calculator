@@ -18,8 +18,8 @@ function get_acf_modules_courses() {
     if (have_rows('course-price-options', 'option')) {
         while (have_rows('course-price-options', 'option')) : the_row();
             $modulesCourses[] = array(
-                "name"  => get_sub_field('name', 'option'),
-                "value" => get_sub_field('preis', 'option'),
+                "name"  => esc_html(get_sub_field('name', 'option')),
+                "value" => esc_html(get_sub_field('preis', 'option')),
             );
         endwhile;
     }
@@ -32,8 +32,8 @@ function get_acf_discount_data() {
     if (have_rows('rabatte', 'option')) {
         while (have_rows('rabatte', 'option')) : the_row();
             $listDiscount[] = array(
-                "nr"       => get_sub_field('modul', 'option'),
-                "discount" => get_sub_field('rabatt-einzeln', 'option'),
+                "nr"       => esc_html(get_sub_field('modul', 'option')),
+                "discount" => esc_html(get_sub_field('rabatt-einzeln', 'option')),
             );
         endwhile;
     }
@@ -87,15 +87,15 @@ function acf_course_calculator() {
         <hr>
         <div class="form-group d-flex my-3">
             <div class="col-md-6"><strong><?php echo $labelCourseCount; ?></strong></div>
-            <div class="col-md-6"><input class="form-control" id="countCourses" type="text" value="" readonly /></div>
+            <div class="col-md-6"><input class="form-control" id="countCourses" type="text" value="" readonly readonly /></div>
         </div>
         <div class="form-group d-flex my-3">
             <div class="col-md-6"><label for="showPriceReg"><?php echo $labelRegPrice; ?></label></div>
-            <div class="col-md-6"><div class="price d-flex align-items-baseline justify-content-end"><input class="form-control" id="showPriceReg" type="text" value="" readonly /><?php echo $currency; ?></div></div>
+            <div class="col-md-6"><div class="price d-flex align-items-baseline justify-content-end"><input class="form-control" id="showPriceReg" type="text" value="" readonly readonly /><?php echo $currency; ?></div></div>
         </div>
         <div class="form-group my-3" id="rowDiscount" aria-hidden="true">
             <div class="col-md-6"><label for="showDiscount"><?php echo $labelDiscount; ?></label></div>
-            <div class="col-md-6"><div class="price d-flex align-items-baseline justify-content-end"><input class="form-control" id="showDiscount" type="text" value="" readonly /><?php echo $currency; ?></div></div>
+            <div class="col-md-6"><div class="price d-flex align-items-baseline justify-content-end"><input class="form-control" id="showDiscount" type="text" value="" readonly readonly /><?php echo $currency; ?></div></div>
         </div>
         <hr>
         <div class="form-group my-3" id="rowPriceAll">
@@ -105,9 +105,11 @@ function acf_course_calculator() {
                     <strong id="labelDiscountResult" class="d-none"><?php echo $labelDiscountResult; ?></strong>
                 </label>
             </div>
-            <div class="col-md-6"><div class="price d-flex align-items-baseline justify-content-end"><input class="form-control" id="showPriceAll" type="text" value="" readonly /><?php echo $currency; ?></div></div>
+            <div class="col-md-6"><div class="price d-flex align-items-baseline justify-content-end"><input class="form-control" id="showPriceAll" type="text" value="" readonly readonly /><?php echo $currency; ?></div></div>
         </div>
+        <!-- <button type="button" id="calculateButton" class="btn btn-primary">Preis berechnen</button> -->
     </form>
+    
     <?php
     return ob_get_clean();
 }
