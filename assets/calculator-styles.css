@@ -1,6 +1,20 @@
+.d-flex{
+  display: flex;
+}
 #courseCalculator {
     background-color: inherit;
     color: inherit;
+  }
+  #courseCalculator .form-group{
+    width:100%;
+    margin: 1rem 0;
+  }
+  #courseCalculator .form-group.d-flex{
+    align-items: baseline;
+  }
+  #courseCalculator .form-group.d-flex > *{
+    flex:1 0 50%;
+    max-width: 50%;
   }
   #courseCalculator input, #courseCalculator select {
     font-size: inherit;
@@ -56,15 +70,18 @@
     display: flex;
     align-items: baseline;
   }
+  #courseCalculator #rowCount,
+  #courseCalculator #rowPriceReg{
+    display: none;
+  }
   #courseCalculator #rowPriceAll{
     background-color: #2466a8;
     color:#fff !important;
   }
   #courseCalculator #rowDiscount {
-    display: none; /* Standardmäßig versteckt */
+    display: none;
     background-color: #ffc107;
   }
-  #courseCalculator #rowDiscount.flex {display: flex; /* Zeige Rabattfeld an */}
-  #courseCalculator #rowDiscount.d-none {display: none !important; /* Ausblenden */}
+  #courseCalculator #rowDiscount.d-flex {display: flex; }/* Zeige Rabattfeld an */
+  /*#courseCalculator #rowDiscount.d-none {display: none !important; }/* Ausblenden */
 
-  

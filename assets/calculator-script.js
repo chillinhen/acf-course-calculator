@@ -1,10 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // HTML-Elemente
     const formElements = {
         moduleStart: document.getElementById("moduleStart"),
         moduleGoal: document.getElementById("moduleGoal"),
         countCourses: document.getElementById("countCourses"),
+        rowCount: document.getElementById("rowCount"),
         showPriceReg: document.getElementById("showPriceReg"),
+        rowPriceReg: document.getElementById("rowPriceReg"),
         showDiscount: document.getElementById("showDiscount"),
         showPriceAll: document.getElementById("showPriceAll"),
         rowDiscount: document.getElementById("rowDiscount"),
@@ -12,96 +13,137 @@ document.addEventListener("DOMContentLoaded", () => {
         labelDiscountResult: document.getElementById("labelDiscountResult"),
     };
 
-    // Beispiel-Daten
-    const moduleDataCourses = [
-        { name: "keine Vorkenntnisse", value: 0 },
-        { name: "A 1.1", value: 520 },
-        { name: "A 1.2", value: 520 },
-        { name: "A 2.1", value: 520 },
-        { name: "A 2.2", value: 520 },
-        { name: "B 1.1", value: 580 },
-        { name: "B 1.2", value: 580 },
-        { name: "B 2.1", value: 580 },
-        { name: "B 2.2", value: 580 },
-        { name: "C 1.1", value: 580 },
-        { name: "C 1.2", value: 580 },
-    ];
+    const modules = acfCourseData.moduleDataCourses || [];
+    const discounts = acfCourseData.listDiscount || [];
 
-    const listDiscount = [0, 0, 50, 100, 150, 200]; // Beispiel: Rabattwerte basierend auf Kursanzahl
+    // Standardoption für Dropdown hinzufügen
+    const addPlaceholderOption = (select) => {
+        const placeholderOption = document.createElement("option");
+        placeholderOption.value = "";
+        placeholderOption.textContent = "Bitte wählen";
+        placeholderOption.disabled = true;
+        placeholderOption.selected = true;
+        select.appendChild(placeholderOption);
+    };
 
-    // Hilfsfunktionen
-    const createOptionsFromObj = (arr, sel, startIndex = 0) => {
-        sel.innerHTML = '<option value="" disabled selected>Bitte wählen</option>';
-        arr.slice(startIndex).forEach(module => {
+    // Optionen in Dropdown einfügen
+    const populateOptions = (arr, select, startIndex = 0) => {
+        select.innerHTML = '';
+        addPlaceholderOption(select); // "Bitte wählen"-Option
+        arr.slice(startIndex).forEach((module, index) => {
             const option = document.createElement("option");
             option.value = module.value;
+            option.dataset.index = startIndex + index;
             option.textContent = module.name;
-            sel.appendChild(option);
+            select.appendChild(option);
         });
     };
 
-    const formatPrice = (price) => {
-        return price.toLocaleString(navigator.language, { style: "currency", currency: navigator.language === "de" ? "EUR" : "USD" });
-    };
-
-    // Logik für die Berechnung
-    const updateGoalOptions = () => {
-        const startIndex = formElements.moduleStart.selectedIndex - 1; // -1 wegen "Bitte wählen"
-        if (startIndex >= 0) {
-            createOptionsFromObj(moduleDataCourses, formElements.moduleGoal, startIndex);
-        }
-    };
-
+    // Preisberechnung und Rabattlogik
     const calculatePrice = () => {
-        const startIndex = formElements.moduleStart.selectedIndex - 1; // -1 wegen "Bitte wählen"
-        const goalIndex = formElements.moduleGoal.selectedIndex - 1;  // -1 wegen "Bitte wählen"
+        const startIndex = parseInt(formElements.moduleStart.selectedOptions[0]?.dataset.index || -1);
+        const endIndex = parseInt(formElements.moduleGoal.selectedOptions[0]?.dataset.index || -1);
 
-        if (startIndex < 0 || goalIndex < 0 || goalIndex < startIndex) {
-            formElements.countCourses.value = "";
-            formElements.showPriceReg.value = "";
-            formElements.showDiscount.value = "";
-            formElements.showPriceAll.value = "";
-            formElements.rowDiscount.setAttribute("aria-hidden", "true");
-            formElements.labelResult.classList.remove("d-none");
-            formElements.labelDiscountResult.classList.add("d-none");
+        if (startIndex < 0 || endIndex < 0 || startIndex >= endIndex) {
+            resetResults();
             return;
         }
 
-        // Anzahl der Kurse
-        const courseCount = goalIndex - startIndex + 1;
-        formElements.countCourses.value = courseCount;
+        let totalCourses = 0;
+        let totalPrice = 0;
 
-        // Gesamtpreis
-        const totalPrice = moduleDataCourses.slice(startIndex, goalIndex + 1).reduce((sum, module) => sum + module.value, 0);
-        formElements.showPriceReg.value = formatPrice(totalPrice);
+        totalPrice = 0; // Sicherstellen, dass totalPrice bei Null beginnt
 
-        // Rabatt
-        const discount = listDiscount[courseCount] || 0;
-        if (discount > 0) {
-            formElements.showDiscount.value = formatPrice(discount);
-            formElements.rowDiscount.setAttribute("aria-hidden", "false");
-            formElements.labelResult.classList.add("d-none");
-            formElements.labelDiscountResult.classList.remove("d-none");
-        } else {
-            formElements.showDiscount.value = "";
-            formElements.rowDiscount.setAttribute("aria-hidden", "true");
-            formElements.labelResult.classList.remove("d-none");
-            formElements.labelDiscountResult.classList.add("d-none");
+        for (let i = startIndex + 1; i <= endIndex; i++) {
+            const previousValue = parseFloat(modules[i - 1]?.value || 0);
+            const currentValue = parseFloat(modules[i]?.value || 0);
+
+            if (isNaN(previousValue) || isNaN(currentValue)) {
+                console.error(`Fehler bei Modul ${i}: Ungültiger Wert`);
+                continue; // Fehlerhafte Module überspringen
+            }
+
+            totalPrice += currentValue; // Hinzufügen des aktuellen Modulkostenwerts
+            console.log(
+                `Von Kurs ${i - 1} (${previousValue} €) zu Kurs ${i} (${currentValue} €): Zwischensumme = ${totalPrice} €`
+            );
+
+            totalCourses++; // Kurszähler aktualisieren
         }
 
-        // Gesamtpreis mit Rabatt
+        if (totalCourses > 0 && totalPrice > 0) {
+            formElements.rowCount.classList.add('d-flex');
+            formElements.rowPriceReg.classList.add('d-flex');
+        } else {
+            formElements.rowCount.classList.remove('d-flex');
+            formElements.rowPriceReg.classList.remove('d-flex');
+        }
+
+        formElements.countCourses.value = totalCourses;
+        formElements.showPriceReg.value = totalPrice.toLocaleString(undefined, { style: "currency", currency: "EUR" });
+
+        // Rabattberechnung mit korrekter Formatierung
+        //const discount = discounts.find(d => d.nr == totalCourses)?.discount || 0;
+        const discountEntry = discounts.find(d => d.nr == totalCourses);
+        const discount = parseFloat(discountEntry?.discount || 0);
+        
+        if(discount > 0) {
+            formElements.showDiscount.value = discount.toLocaleString(undefined, { style: "currency", currency: "EUR" });
+        } else {formElements.showDiscount.value = '';}
+        // formElements.showDiscount.value = discount > 0 
+        //     ? discount.toLocaleString(undefined, { style: "currency", currency: "EUR" }) 
+        //     : ''; // Hier wird die Währungsformatierung korrekt angewendet
+
+        if (discount > 0) {
+            formElements.rowDiscount.setAttribute("aria-hidden", "false");
+            formElements.rowDiscount.classList.add('d-flex');
+        } else {
+            formElements.rowDiscount.setAttribute("aria-hidden", "true");
+            formElements.rowDiscount.classList.remove('d-flex');
+        }
+
         const finalPrice = totalPrice - discount;
-        formElements.showPriceAll.value = formatPrice(finalPrice);
+        formElements.showPriceAll.value = finalPrice.toLocaleString(undefined, { style: "currency", currency: "EUR" });
+
+        // Labels aktualisieren basierend auf Rabatt
+        if (discount > 0) {
+            formElements.labelResult.classList.add('d-none');
+            formElements.labelDiscountResult.classList.remove('d-none');
+        } else {
+            formElements.labelResult.classList.remove('d-none');
+            formElements.labelDiscountResult.classList.add('d-none');
+        }
     };
 
+    
+
+    // Zielkurse basierend auf Startkurs aktualisieren
+    const updateGoalOptions = () => {
+        const startIndex = parseInt(formElements.moduleStart.selectedOptions[0]?.dataset.index || -1);
+        if (startIndex >= 0) {
+            populateOptions(modules, formElements.moduleGoal, startIndex + 1);
+        } else {
+            populateOptions(modules, formElements.moduleGoal); // Alle Optionen, wenn kein Startkurs gewählt
+        }
+        resetResults();
+    };
+
+    // Ergebnisse zurücksetzen
+    const resetResults = () => {
+        formElements.countCourses.value = '';
+        formElements.showPriceReg.value = '';
+        formElements.showDiscount.value = '';
+        formElements.rowDiscount.setAttribute("aria-hidden", "true");
+        formElements.showPriceAll.value = '';
+        formElements.labelResult.classList.remove("d-none");
+        formElements.labelDiscountResult.classList.add("d-none");
+    };
+
+    // Initiale Optionen laden
+    populateOptions(modules, formElements.moduleStart);
+    populateOptions(modules, formElements.moduleGoal);
+
     // Event-Listener
-    formElements.moduleStart.addEventListener("change", () => {
-        updateGoalOptions();
-        calculatePrice();
-    });
-
+    formElements.moduleStart.addEventListener("change", updateGoalOptions);
     formElements.moduleGoal.addEventListener("change", calculatePrice);
-
-    // Initialisierung
-    createOptionsFromObj(moduleDataCourses, formElements.moduleStart);
 });
