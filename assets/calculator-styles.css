@@ -1,21 +1,8 @@
-.d-flex{
-  display: flex;
-}
 #courseCalculator {
     background-color: inherit;
     color: inherit;
   }
-  #courseCalculator .form-group{
-    width:100%;
-    margin: 1rem 0;
-  }
-  #courseCalculator .form-group.d-flex{
-    align-items: baseline;
-  }
-  #courseCalculator .form-group.d-flex > *{
-    flex:1 0 50%;
-    max-width: 50%;
-  }
+  #courseCalculator .form-group{align-items: baseline;}
   #courseCalculator input, #courseCalculator select {
     font-size: inherit;
     color:#333 !important;

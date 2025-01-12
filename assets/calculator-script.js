@@ -52,24 +52,29 @@ document.addEventListener("DOMContentLoaded", () => {
         let totalCourses = 0;
         let totalPrice = 0;
 
+        // for (let i = startIndex; i < endIndex; i++) {
+        //     totalCourses++;
+        //     totalPrice += parseFloat(modules[i].value);
+        //     console.log("Start Index:", startIndex, "End Index:", endIndex);
+        // }
         totalPrice = 0; // Sicherstellen, dass totalPrice bei Null beginnt
 
-        for (let i = startIndex + 1; i <= endIndex; i++) {
-            const previousValue = parseFloat(modules[i - 1]?.value || 0);
-            const currentValue = parseFloat(modules[i]?.value || 0);
+for (let i = startIndex + 1; i <= endIndex; i++) {
+    const previousValue = parseFloat(modules[i - 1]?.value || 0);
+    const currentValue = parseFloat(modules[i]?.value || 0);
 
-            if (isNaN(previousValue) || isNaN(currentValue)) {
-                console.error(`Fehler bei Modul ${i}: Ungültiger Wert`);
-                continue; // Fehlerhafte Module überspringen
-            }
+    if (isNaN(previousValue) || isNaN(currentValue)) {
+        console.error(`Fehler bei Modul ${i}: Ungültiger Wert`);
+        continue; // Fehlerhafte Module überspringen
+    }
 
-            totalPrice += currentValue; // Hinzufügen des aktuellen Modulkostenwerts
-            console.log(
-                `Von Kurs ${i - 1} (${previousValue} €) zu Kurs ${i} (${currentValue} €): Zwischensumme = ${totalPrice} €`
-            );
+    totalPrice += currentValue; // Hinzufügen des aktuellen Modulkostenwerts
+    console.log(
+        `Von Kurs ${i - 1} (${previousValue} €) zu Kurs ${i} (${currentValue} €): Zwischensumme = ${totalPrice} €`
+    );
 
-            totalCourses++; // Kurszähler aktualisieren
-        }
+    totalCourses++; // Kurszähler aktualisieren
+}
 
         if (totalCourses > 0 && totalPrice > 0) {
             formElements.rowCount.classList.add('d-flex');
