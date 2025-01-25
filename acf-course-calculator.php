@@ -1,106 +1,158 @@
 <?php
-/*
-Plugin Name: ACF Course Calculator
-Description: Plugin zur Berechnung der Kurskosten und Rabatte, basierend auf ACF-Daten
-Version: 1.2
-*/
+/**
+ * Mehrsprachiger ACF-basierter Preisrechner
+ */
 
-// Enqueue Styles und Scripts
-function acf_course_calculator_enqueue() {
+// Sicherheitsabfrage, um direkten Zugriff zu verhindern
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// Assets einbinden
+function enqueue_calculator_assets() {
     wp_enqueue_style('calculator-styles', plugin_dir_url(__FILE__) . 'assets/calculator-styles.css');
-    wp_enqueue_script('calculator-script', plugin_dir_url(__FILE__) . 'assets/calculator-script.js', [], null, true);
+    wp_enqueue_script('calculator-script', plugin_dir_url(__FILE__) . 'assets/calculator-script.js', ['jquery'], null, true);
 
-    // ACF-Daten abrufen
-    $modulesCourses = [];
-    if (have_rows('course-price-options', 'option')) {
-        while (have_rows('course-price-options', 'option')) : the_row();
-            $modulesCourses[] = [
-                'name'  => get_sub_field('name', 'option'),
-                'value' => get_sub_field('preis', 'option'),
-            ];
-        endwhile;
+    $current_language = pll_current_language();
+
+    // Labels laden (sprachabhängig)
+    $labels = get_field('labels', 'option');
+    if (!$labels) {
+        error_log("ACF labels field is empty or not found.");
+        $labels = [];
     }
+    $filtered_labels = array_filter($labels, function($label) use ($current_language) {
+        return $label['language'] === $current_language;
+    });
+    $current_labels = reset($filtered_labels);
 
-    $listDiscount = [];
-    if (have_rows('rabatte', 'option')) {
-        while (have_rows('rabatte', 'option')) : the_row();
-            $listDiscount[] = [
-                'nr'       => get_sub_field('modul', 'option'),
-                'discount' => get_sub_field('rabatt-einzeln', 'option'),
-            ];
-        endwhile;
+    // Knowledge Levels laden (sprachabhängig)
+    $knowledges = get_field('knowledges', 'option');
+    if (!$knowledges) {
+        error_log("ACF knowledges field is empty or not found.");
+        $knowledges = [];
     }
+    $filtered_knowledges = array_filter($knowledges, function($knowledge) use ($current_language) {
+        return $knowledge['language'] === $current_language;
+    });
+    $processed_knowledges = array_map(function($knowledge) {
+        return [
+            'name' => $knowledge['knowledge_name'] ?? '',
+            'price' => $knowledge['knowledge_price'] ?? 0
+        ];
+    }, $filtered_knowledges);
 
-    // Daten an JavaScript übergeben
+    // Module laden (global, nicht sprachabhängig)
+    $modules = get_field('modules', 'option');
+    if (!$modules) {
+        error_log("ACF modules field is empty or not found.");
+        $modules = [];
+    }
+    $processed_modules = array_map(function($module) {
+        return [
+            'name' => $module['module_name'] ?? '',
+            'price' => $module['module_price'] ?? 0
+        ];
+    }, $modules);
+
+    // Rabatte laden (global, nicht mehrsprachig)
+    $discounts = get_field('discounts', 'option');
+    if (!$discounts) {
+        error_log("ACF discounts field is empty or not found.");
+        $discounts = [];
+    }
+    $processed_discounts = array_map(function($discount) {
+        return [
+            'course_count' => $discount['course_count'] ?? 0,
+            'discount_value' => $discount['discount_value'] ?? 0
+        ];
+    }, $discounts);
+
+    // Sprachabhängige Texte
+    $localized_texts = [
+        'headline' => $current_labels['headline'] ?? 'Preisrechner',
+        'start_label' => $current_labels['label_start'] ?? 'Startmodul',
+        'goal_label' => $current_labels['label_goal'] ?? 'Zielmodul',
+        'count_label' => $current_labels['label_course_count'] ?? 'Anzahl Kurse',
+        'price_label' => $current_labels['label_price'] ?? 'Preis',
+        'discount_label' => $current_labels['label_discount'] ?? 'Rabatt',
+        'final_price_label' => $current_labels['label_final_price'] ?? 'Gesamtpreis',
+        'placeholder' => 'Bitte wählen',
+        'currency' => '€',
+    ];
+
     wp_localize_script('calculator-script', 'acfCourseData', [
-        'moduleDataCourses' => $modulesCourses,
-        'listDiscount' => $listDiscount,
+        'knowledgeLevels' => array_values($processed_knowledges),
+        'moduleDataCourses' => array_values($processed_modules),
+        'listDiscount' => $processed_discounts, // Rabatte korrekt verarbeitet
+        'texts' => $localized_texts,
     ]);
 }
-add_action('wp_enqueue_scripts', 'acf_course_calculator_enqueue');
+add_action('wp_enqueue_scripts', 'enqueue_calculator_assets');
 
-// Shortcode generieren
-function acf_course_calculator_shortcode() {
-    if (!function_exists('get_field')) {
-        return '<p>Bitte installieren und aktivieren Sie das ACF-Plugin.</p>';
-    }
-
-    $headline = esc_html(get_field('calculator_headline', 'option'));
-    $labelModuleStart = esc_html(get_field('label-module-start', 'option'));
-    $labelModuleGoal = esc_html(get_field('label-module-goal', 'option'));
-    $labelRegPrice = esc_html(get_field('label-reg-price', 'option'));
-    $labelCourseCount = esc_html(get_field('label-course-count', 'option'));
-    $labelDiscount = esc_html(get_field('label-dicount', 'option'));
-    $labelResult = esc_html(get_field('label-result', 'option'));
-    $labelDiscountResult = esc_html(get_field('label-discount-result', 'option'));
-    $currency = esc_html(get_field('suffix-currency', 'option'));
-
-    ob_start(); ?>
+// Formular rendern
+function render_course_calculator() {
+    ?>
     <form id="courseCalculator">
-        <?php if ($headline): ?>
-            <legend><?php echo $headline; ?></legend>
-        <?php endif; ?>
-        <div class="form-group my-3">
-            <label for="moduleStart"><strong><?php echo $labelModuleStart; ?></strong></label>
-            <select id="moduleStart" class="form-control"></select>
+        <h1 id="calculatorHeadline"></h1>
+        <div class="form-group">
+            <label for="moduleStart" id="startLabel"></label>
+            <select id="moduleStart" name="moduleStart"></select>
         </div>
-        <div class="form-group my-3">
-            <label for="moduleGoal"><strong><?php echo $labelModuleGoal; ?></strong></label>
-            <select id="moduleGoal" class="form-control"></select>
+        <div class="form-group">
+            <label for="moduleGoal" id="goalLabel"></label>
+            <select id="moduleGoal" name="moduleGoal"></select>
         </div>
-        <hr>
-        <div class="form-group my-3" id="rowCount">
-            <div class="col-md-6"><strong><?php echo $labelCourseCount; ?></strong></div>
-            <div class="col-md-6">
-                <!-- <span class="form-control" id="countCourses"><span> -->
-                <input class="form-control" id="countCourses" type="text" value="" readonly />
-            </div>
+        <div id="rowCount" class="row">
+            <label id="countLabel"></label>
+            <input type="text" id="countCourses" readonly />
         </div>
-        <div class="form-group my-3" id="rowPriceReg">
-            <div class="col-md-6"><label for="showPriceReg"><?php echo $labelRegPrice; ?></label></div>
-            <div class="col-md-6"><div class="price d-flex align-items-baseline justify-content-end"><input class="form-control" id="showPriceReg" type="text" value="" readonly /></div></div>
+        <div id="rowPriceReg" class="row">
+            <label id="priceLabel"></label>
+            <input type="text" id="showPriceReg" readonly />
         </div>
-        <div class="form-group my-3" id="rowDiscount" aria-hidden="true">
-            <div class="col-md-6"><label for="showDiscount"><?php echo $labelDiscount; ?></label></div>
-            <div class="col-md-6">
-                <div class="price d-flex align-items-baseline justify-content-end">
-                    <input class="form-control" id="showDiscount" type="text" value="" readonly />
-                    <!-- <span class="form-control" id="showDiscount"></span> -->
-                </div>
-            </div>
+        <div id="rowDiscount" class="row">
+            <label id="discountLabel"></label>
+            <input type="text" id="showDiscount" readonly />
         </div>
-        <hr>
-        <div class="form-group my-3" id="rowPriceAll">
-            <div class="col-md-6">
-                <label for="showPriceRegAll">
-                    <strong id="labelResult"><?php echo $labelResult; ?></strong>
-                    <strong id="labelDiscountResult" class="d-none"><?php echo $labelDiscountResult; ?></strong>
-                </label>
-            </div>
-            <div class="col-md-6"><div class="price d-flex align-items-baseline justify-content-end"><input class="form-control" id="showPriceAll" type="text" value="" readonly /></div></div>
+        <div id="rowPriceAll" class="row">
+            <label id="finalPriceLabel"></label>
+            <input type="text" id="showPriceAll" readonly />
         </div>
     </form>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Labels dynamisch einsetzen
+            const texts = acfCourseData.texts;
+            document.getElementById('calculatorHeadline').textContent = texts.headline;
+            document.getElementById('startLabel').textContent = texts.start_label;
+            document.getElementById('goalLabel').textContent = texts.goal_label;
+            document.getElementById('countLabel').textContent = texts.count_label;
+            document.getElementById('priceLabel').textContent = texts.price_label;
+            document.getElementById('discountLabel').textContent = texts.discount_label;
+            document.getElementById('finalPriceLabel').textContent = texts.final_price_label;
+
+            // Knowledge Levels in Dropdown einfügen
+            const moduleStart = document.getElementById('moduleStart');
+            acfCourseData.knowledgeLevels.forEach((knowledge, index) => {
+                const option = document.createElement('option');
+                option.value = knowledge.price;
+                option.textContent = `${knowledge.name} (${knowledge.price}€)`;
+                option.dataset.index = index;
+                moduleStart.appendChild(option);
+            });
+
+            // Module in Dropdown einfügen
+            const moduleGoal = document.getElementById('moduleGoal');
+            acfCourseData.moduleDataCourses.forEach((module, index) => {
+                const option = document.createElement('option');
+                option.value = module.price;
+                option.textContent = `${module.name} (${module.price}€)`;
+                option.dataset.index = index;
+                moduleGoal.appendChild(option);
+            });
+        });
+    </script>
     <?php
-    return ob_get_clean();
 }
-add_shortcode('acf_course_calculator', 'acf_course_calculator_shortcode');?>
+add_shortcode('acf_course_calculator', 'render_course_calculator');
