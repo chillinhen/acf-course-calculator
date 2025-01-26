@@ -1,9 +1,5 @@
 <?php
-/*
-Plugin Name: ACF Course Calculator
-Description: Plugin zur Berechnung der Kurskosten und Rabatte, basierend auf ACF-Daten, zuletzt bearbeitet 25.01.2025
-Version: 1.2
-*/
+
 
 // Enqueue Styles und Scripts
 function acf_course_calculator_enqueue() {
