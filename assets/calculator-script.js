@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const modules = acfCourseData.moduleDataCourses || [];
+    console.log(modules);
     const discounts = acfCourseData.listDiscount || [];
 
     // Standardoption für Dropdown hinzufügen
