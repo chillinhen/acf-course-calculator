@@ -5,7 +5,7 @@ Description: Plugin zur Berechnung der Kurskosten und Rabatte, basierend auf ACF
 Version: 1.2
 */
 
-// Enqueue Styles und Scripts
+// Enqueue Styles und Scriptsa
 function acf_course_calculator_enqueue() {
     wp_enqueue_style('calculator-styles', plugin_dir_url(__FILE__) . 'assets/calculator-styles.css');
     wp_enqueue_script('calculator-script', plugin_dir_url(__FILE__) . 'assets/calculator-script.js', [], null, true);
